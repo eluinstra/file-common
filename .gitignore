@@ -1,0 +1,13 @@
+*.svg
+/.classpath
+/.factorypath
+/.project
+/.settings
+/target
+dependency-reduced-pom.xml
+
+.vscode
+*.code-workspace
+
+.idea
+*.iml
