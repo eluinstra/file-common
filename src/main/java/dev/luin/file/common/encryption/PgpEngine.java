@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
@@ -42,12 +43,10 @@ public class PgpEngine
 	boolean withIntegrityPacket = true;
 	int bufferSize = 1 << 16;
 
-	public PGPPublicKey getEncryptionKey(InputStream keyInputStream) throws IOException, PGPException
+	public Optional<PGPPublicKey> getEncryptionKey(InputStream keyInputStream) throws IOException, PGPException
 	{
 		val publicKeyRings = new PGPPublicKeyRingCollection(PGPUtil.getDecoderStream(keyInputStream), new JcaKeyFingerprintCalculator());
-		return stream(spliteratorUnknownSize(publicKeyRings.getKeyRings(), ORDERED), false).flatMap(this::getEncryptionKeys)
-				.findAny()
-				.orElseThrow(() -> new PGPException("No encryption key found"));
+		return stream(spliteratorUnknownSize(publicKeyRings.getKeyRings(), ORDERED), false).flatMap(this::getEncryptionKeys).findFirst();
 	}
 
 	private Stream<PGPPublicKey> getEncryptionKeys(PGPPublicKeyRing publicKeyRing)
