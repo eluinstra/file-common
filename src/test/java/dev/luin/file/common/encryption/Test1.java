@@ -1,5 +1,7 @@
 package dev.luin.file.common.encryption;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -11,7 +13,6 @@ import java.security.Security;
 import java.util.Date;
 import java.util.Objects;
 
-import org.assertj.core.api.Assertions;
 import org.bouncycastle.bcpg.AEADAlgorithmTags;
 import org.bouncycastle.bcpg.ArmoredInputStream;
 import org.bouncycastle.bcpg.ArmoredOutputStream;
@@ -37,8 +38,6 @@ import org.bouncycastle.util.Strings;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.io.Streams;
 import org.junit.jupiter.api.Test;
-
-import lombok.val;
 
 class Test1 {
 	byte[] sample = Base64.decode(
@@ -66,7 +65,7 @@ class Test1 {
 
 	int encryptionAlgorithm = SymmetricKeyAlgorithmTags.AES_256;
 	int compressionAlgorithm = CompressionAlgorithmTags.UNCOMPRESSED;
-	boolean armorOutput = false;
+	boolean armorOutput = true;
 	boolean withIntegrityPacket = true;
 	int bufferSize = 1 << 16;
 
@@ -77,44 +76,44 @@ class Test1 {
 
 	@Test
 	void testArmor() throws IOException {
-		val bOut = new ByteArrayOutputStream();
-		val aOut = new ArmoredOutputStream(bOut);
+		ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+		ArmoredOutputStream aOut = new ArmoredOutputStream(bOut);
 		aOut.write(sample);
 		aOut.close();
 		System.out.println(bOut.toString());
 		ArmoredInputStream aIn = new ArmoredInputStream(new ByteArrayInputStream(bOut.toByteArray()));
-		val msg = aIn.readAllBytes();
+		byte[] msg = aIn.readAllBytes();
 		aIn.close();
-		Assertions.assertThat(sample).isEqualTo(msg);
+		assertThat(sample).isEqualTo(msg);
 	}
 
 	@Test
 	void testArmor1() throws IOException {
-		val msg = "Dit is een sample.".getBytes();
-		val bOut = new ByteArrayOutputStream();
-		val aOut = new ArmoredOutputStream(bOut);
+		byte[] msg = "Dit is een sample.".getBytes();
+		ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+		ArmoredOutputStream aOut = new ArmoredOutputStream(bOut);
 		aOut.write(msg);
 		aOut.close();
 		System.out.println(bOut.toString());
 		ArmoredInputStream aIn = new ArmoredInputStream(new ByteArrayInputStream(bOut.toByteArray()));
-		val data = aIn.readAllBytes();
+		byte[] data = aIn.readAllBytes();
 		aIn.close();
-		Assertions.assertThat(data).isEqualTo(msg);
+		assertThat(data).isEqualTo(msg);
 	}
 
 	@Test
 	void testArmor2() throws IOException {
-		val msg = "Dit is een sample.".getBytes();
-		val in = new ByteArrayInputStream(msg);
-		val bOut = new ByteArrayOutputStream();
-		val aOut = new ArmoredOutputStream(bOut);
+		byte[] msg = "Dit is een sample.".getBytes();
+		ByteArrayInputStream in = new ByteArrayInputStream(msg);
+		ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+		ArmoredOutputStream aOut = new ArmoredOutputStream(bOut);
 		in.transferTo(aOut);
 		aOut.close();
 		System.out.println(bOut.toString());
 		ArmoredInputStream aIn = new ArmoredInputStream(new ByteArrayInputStream(bOut.toByteArray()));
-		val data = aIn.readAllBytes();
+		byte[] data = aIn.readAllBytes();
 		aIn.close();
-		Assertions.assertThat(data).isEqualTo(msg);
+		assertThat(data).isEqualTo(msg);
 	}
 
 	@Test
@@ -138,10 +137,10 @@ class Test1 {
 
 		PGPObjectFactory oIn = new JcaPGPObjectFactory(new ArmoredInputStream(new ByteArrayInputStream(bOut.toByteArray())));
 
-		val ld = (PGPLiteralData)oIn.nextObject();
+		PGPLiteralData ld = (PGPLiteralData)oIn.nextObject();
 		byte[] data = Streams.readAll(ld.getDataStream());
 
-		Assertions.assertThat(data).isEqualTo(msg);
+		assertThat(data).isEqualTo(msg);
 	}
 
 	@Test
@@ -212,11 +211,11 @@ class Test1 {
 		PGPLiteralData ld = (PGPLiteralData) pgpFact.nextObject();
 
 		// isEquals("wrong filename", PGPLiteralData.CONSOLE, ld.getFileName());
-		Assertions.assertThat(ld.getFileName()).isEqualTo(PGPLiteralData.CONSOLE);
+		assertThat(ld.getFileName()).isEqualTo(PGPLiteralData.CONSOLE);
 
 		byte[] data = Streams.readAll(ld.getDataStream());
 
-		Assertions.assertThat(data).isEqualTo(msg);
+		assertThat(data).isEqualTo(msg);
 		// isTrue("msg mismatch", Arrays.areEqual(msg, data));
 	}
 
@@ -288,11 +287,11 @@ class Test1 {
 		PGPLiteralData ld = (PGPLiteralData) pgpFact.nextObject();
 
 		// isEquals("wrong filename", PGPLiteralData.CONSOLE, ld.getFileName());
-		Assertions.assertThat(ld.getFileName()).isEqualTo(PGPLiteralData.CONSOLE);
+		assertThat(ld.getFileName()).isEqualTo(PGPLiteralData.CONSOLE);
 
 		byte[] data = Streams.readAll(ld.getDataStream());
 
-		Assertions.assertThat(data).isEqualTo(msg);
+		assertThat(data).isEqualTo(msg);
 		// isTrue("msg mismatch", Arrays.areEqual(msg, data));
 	}
 }
