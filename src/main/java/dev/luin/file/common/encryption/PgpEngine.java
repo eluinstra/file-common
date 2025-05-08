@@ -40,7 +40,7 @@ import org.bouncycastle.openpgp.operator.jcajce.JcePublicKeyKeyEncryptionMethodG
 public class PgpEngine {
 	int encryptionAlgorithm = SymmetricKeyAlgorithmTags.AES_256;
 	int compressionAlgorithm = CompressionAlgorithmTags.UNCOMPRESSED;
-	boolean armorOutput = false;
+	boolean armorOutput = true;
 	boolean withIntegrityPacket = true;
 	int bufferSize = 1 << 16;
 

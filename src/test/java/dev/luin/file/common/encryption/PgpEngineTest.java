@@ -37,13 +37,11 @@ class PgpEngineTest
 	@Test
 	void testEncryptFile() throws IOException, PGPException
 	{
-		val in = new ByteArrayInputStream("Dit is een test.".getBytes());
+		val in = new ByteArrayInputStream("Dit is een test..".getBytes());
 		val out = new ByteArrayOutputStream();
 		val key = new PgpEngine().getEncryptionKey(getClass().getResourceAsStream("public_key.asc"));
 		new PgpEngine().encrypt(out, in, key.get());
 		// out.flush();
-		System.out.println("----");
 		System.out.println(out.toString());
-		System.out.println("----");
 	}
 }
