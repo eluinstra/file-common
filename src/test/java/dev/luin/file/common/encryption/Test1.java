@@ -66,7 +66,7 @@ class Test1
 
 	int encryptionAlgorithm = SymmetricKeyAlgorithmTags.AES_256;
 	int compressionAlgorithm = CompressionAlgorithmTags.UNCOMPRESSED;
-	boolean armorOutput = false;
+	boolean armorOutput = true;
 	boolean withIntegrityPacket = true;
 	int bufferSize = 1 << 16;
 
@@ -80,128 +80,46 @@ class Test1
 	void testArmor() throws IOException {
 		val bOut = new ByteArrayOutputStream();
 		val aOut = new ArmoredOutputStream(bOut);
-
 		aOut.write(sample);
-
 		aOut.close();
-
 		System.out.println(bOut.toString());
-
 		ArmoredInputStream aIn = new ArmoredInputStream(new ByteArrayInputStream(bOut.toByteArray()));
-
+		val msg = aIn.readAllBytes();
+		aIn.close();
+		Assertions.assertThat(sample).isEqualTo(msg);
 	}
 
 	@Test
 	void testArmor1() throws IOException {
+		val data = "Dit is een sample.".getBytes();
 		val bOut = new ByteArrayOutputStream();
 		val aOut = new ArmoredOutputStream(bOut);
-
-		aOut.write("Dit is een sample.".getBytes());
-
+		aOut.write(data);
 		aOut.close();
-
 		System.out.println(bOut.toString());
-
 		ArmoredInputStream aIn = new ArmoredInputStream(new ByteArrayInputStream(bOut.toByteArray()));
-
+		val msg = aIn.readAllBytes();
+		aIn.close();
+		Assertions.assertThat(data).isEqualTo(msg);
 	}
 
 	@Test
 	void testArmor2() throws IOException {
-		val in = new ByteArrayInputStream("Dit is een sample.".getBytes());
+		val data = "Dit is een sample.".getBytes();
+		val in = new ByteArrayInputStream(data);
 		val bOut = new ByteArrayOutputStream();
 		val aOut = new ArmoredOutputStream(bOut);
-
 		in.transferTo(aOut);
-
 		aOut.close();
-
 		System.out.println(bOut.toString());
-
 		ArmoredInputStream aIn = new ArmoredInputStream(new ByteArrayInputStream(bOut.toByteArray()));
-
+		val msg = aIn.readAllBytes();
+		aIn.close();
+		Assertions.assertThat(data).isEqualTo(msg);
 	}
 
 	@Test
 	void encryptDecryptMultiChunkTest() throws Exception
-	{
-		// SecureRandom random = new SecureRandom();
-		val msg = new ByteArrayInputStream("Dit is een test.".getBytes());
-
-		// random.nextBytes(msg);
-
-		KeyPairGenerator kpGen = KeyPairGenerator.getInstance("RSA", "BC");
-
-		kpGen.initialize(2048);
-
-		PGPKeyPair pgpKp = new JcaPGPKeyPair(PGPPublicKey.RSA_GENERAL, kpGen.generateKeyPair(), new Date());
-
-		PGPPublicKey pubKey = pgpKp.getPublicKey();
-		// PGPPublicKey pubKey = new PgpEngine().getEncryptionKey((getClass().getResourceAsStream("public_key.asc"))).get();
-
-		PGPPrivateKey privKey = pgpKp.getPrivateKey();
-
-		ByteArrayOutputStream cbOut = new ByteArrayOutputStream();
-		// JcePGPDataEncryptorBuilder encryptorBuilder = new JcePGPDataEncryptorBuilder(PGPEncryptedData.AES_256).setSecureRandom(random).setProvider("BC");
-		JcePGPDataEncryptorBuilder encryptorBuilder = new JcePGPDataEncryptorBuilder(encryptionAlgorithm).setWithIntegrityPacket(withIntegrityPacket)
-				.setSecureRandom(new SecureRandom())
-				.setProvider(BouncyCastleProvider.PROVIDER_NAME);
-
-		// encryptorBuilder.setUseV5AEAD();
-		// encryptorBuilder.setWithAEAD(AEADAlgorithmTags.OCB, 6);
-
-		PGPEncryptedDataGenerator cPk = new PGPEncryptedDataGenerator(encryptorBuilder);
-
-		cPk.addMethod(new JcePublicKeyKeyEncryptionMethodGenerator(pubKey).setProvider("BC"));
-
-		ByteArrayOutputStream ldbOut = new ByteArrayOutputStream();
-		PGPLiteralDataGenerator ldGen = new PGPLiteralDataGenerator();
-
-		// OutputStream ldOut = ldGen.open(ldbOut, PGPLiteralData.BINARY, PGPLiteralData.CONSOLE, (long)msg.length, new Date());
-		OutputStream ldOut = ldGen.open(ldbOut, PGPLiteralData.BINARY, PGPLiteralData.CONSOLE, new Date(), new byte[bufferSize]);
-
-		ldOut.write(msg.readAllBytes());
-
-		ldOut.close();
-
-		byte[] litData = ldbOut.toByteArray();
-
-		// OutputStream cOut = cPk.open(cbOut, litData.length);
-		OutputStream cOut = cPk.open(armorOutput ? new ArmoredOutputStream(cbOut) : cbOut, new byte[bufferSize]);
-
-		cOut.write(litData);
-
-		cOut.flush();
-		cOut.close();
-
-		System.out.println(cbOut.toString());
-
-		// decrypt
-		PGPObjectFactory oIn = new JcaPGPObjectFactory(armorOutput ? new ArmoredInputStream(new ByteArrayInputStream(cbOut.toByteArray())) : new ByteArrayInputStream(cbOut.toByteArray()));
-
-		PGPEncryptedDataList encList = (PGPEncryptedDataList)oIn.nextObject();
-
-		PGPPublicKeyEncryptedData encP = (PGPPublicKeyEncryptedData)encList.get(0);
-
-		InputStream clear = encP.getDataStream(new JcePublicKeyDataDecryptorFactoryBuilder().setProvider("BC").build(privKey));
-
-		// System.err.println(Hex.toHexString(Streams.readAll(clear)));
-		PGPObjectFactory pgpFact = new JcaPGPObjectFactory(clear);
-
-		PGPLiteralData ld = (PGPLiteralData)pgpFact.nextObject();
-
-		// isEquals("wrong filename", PGPLiteralData.CONSOLE, ld.getFileName());
-		Assertions.assertThat(ld.getFileName()).isEqualTo(PGPLiteralData.CONSOLE);
-
-		byte[] data = Streams.readAll(ld.getDataStream());
-
-		msg.reset();
-		Assertions.assertThat(data).isEqualTo(msg.readAllBytes());
-		// isTrue("msg mismatch", Arrays.areEqual(msg, data));
-	}
-
-	@Test
-	void encryptDecryptMultiChunkTest1() throws Exception
 	{
 		SecureRandom random = new SecureRandom();
 		byte[] msg = new byte[60000];
@@ -239,6 +157,7 @@ class Test1
 
 		byte[] litData = ldbOut.toByteArray();
 
+		// Added Armor
 		OutputStream cOut = cPk.open(armorOutput ? new ArmoredOutputStream(cbOut) : cbOut, litData.length);
 
 		cOut.write(litData);
@@ -248,6 +167,7 @@ class Test1
 		System.out.println(cbOut.toString());
 
 		// decrypt
+		// Added Armor
 		PGPObjectFactory oIn = new JcaPGPObjectFactory(armorOutput ? new ArmoredInputStream(new ByteArrayInputStream(cbOut.toByteArray())) : new ByteArrayInputStream(cbOut.toByteArray()));
 
 		PGPEncryptedDataList encList = (PGPEncryptedDataList)oIn.nextObject();
@@ -309,6 +229,7 @@ void encryptDecryptMultiChunkBoundaryTest() throws Exception
 
 		byte[] litData = ldbOut.toByteArray();
 
+		// Added Armor
 		OutputStream cOut = cPk.open(armorOutput ? new ArmoredOutputStream(cbOut) : cbOut, litData.length);
 
 		cOut.write(litData);
@@ -318,6 +239,7 @@ void encryptDecryptMultiChunkBoundaryTest() throws Exception
 		System.out.println(cbOut.toString());
 
 		// decrypt
+		// Added Armor
 		PGPObjectFactory oIn = new JcaPGPObjectFactory(armorOutput ? new ArmoredInputStream(new ByteArrayInputStream(cbOut.toByteArray())) : new ByteArrayInputStream(cbOut.toByteArray()));
 
 		PGPEncryptedDataList encList = (PGPEncryptedDataList)oIn.nextObject();
