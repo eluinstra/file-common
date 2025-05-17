@@ -2,13 +2,24 @@ package dev.luin.file.common.encryption;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.security.Security;
+import java.util.Objects;
 import lombok.val;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openpgp.PGPException;
 import org.junit.jupiter.api.Test;
 
 class PgpEngineTest
 {
+	static
+	{
+		if (Objects.isNull(Security.getProvider(BouncyCastleProvider.PROVIDER_NAME)))
+			Security.addProvider(new BouncyCastleProvider());
+	}
+
 	@Test
 	void testEncryptionKey() throws IOException, PGPException
 	{
@@ -21,5 +32,15 @@ class PgpEngineTest
 	{
 		val result = new PgpEngine().getEncryptionKey(getClass().getResourceAsStream("public_signing_key.asc"));
 		assertThat(result).isEmpty();
+	}
+
+	@Test
+	void testEncryptFile() throws IOException, PGPException
+	{
+		val in = new ByteArrayInputStream("Dit is een test.".getBytes());
+		val out = new ByteArrayOutputStream();
+		val key = new PgpEngine().getEncryptionKey(getClass().getResourceAsStream("public_key.asc"));
+		new PgpEngine().encrypt(out, in, key.get());
+		System.out.println(out.toString());
 	}
 }
